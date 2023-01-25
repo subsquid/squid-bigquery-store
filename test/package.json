@@ -1,0 +1,26 @@
+{
+  "name": "test",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=16"
+  },
+  "scripts": {
+    "build": "rm -rf lib && tsc",
+    "update": "npx npm-check-updates --filter /subsquid/ --upgrade",
+    "processor:start": "node lib/processor.js"
+  },
+  "dependencies": {
+    "@subsquid/bigquery-store": "^0.0.0",
+    "@subsquid/ss58": "^0.1.2",
+    "@subsquid/substrate-processor": "^2.2.0",
+    "dotenv": "^16.0.3",
+    "@google-cloud/bigquery": "^6.0.3"
+  },
+  "devDependencies": {
+    "@subsquid/substrate-metadata-explorer": "^1.0.9",
+    "@subsquid/substrate-typegen": "^2.1.0",
+    "@types/node": "16.11.56",
+    "typescript": "4.8.2"
+  }
+}

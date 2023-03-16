@@ -1,6 +1,6 @@
 {
   "name": "@subsquid/bigquery-store",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "BigQuery based storage for squid mappings",
   "publishConfig": {
     "access": "public"

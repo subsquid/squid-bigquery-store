@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@subsquid/bigquery-store",
+      "comment": "fix boolean typescript type",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@subsquid/bigquery-store"
+}

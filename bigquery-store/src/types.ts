@@ -11,7 +11,7 @@ export function String(): Type<string> {
     }
 }
 
-export function Numeric(precision: number, scale = 0): Type<bigint> {
+export function Numeric(precision: number, scale = 0): Type<number | bigint> {
     assert(Number.isSafeInteger(precision) && precision > 0 && precision <= 38, 'Invalid precision')
     assert(Number.isSafeInteger(scale) && scale > 0 && scale <= precision, 'Invalid scale')
     return {
@@ -22,7 +22,7 @@ export function Numeric(precision: number, scale = 0): Type<bigint> {
     }
 }
 
-export function BigNumeric(precision: number, scale = 0): Type<bigint> {
+export function BigNumeric(precision: number, scale = 0): Type<number | bigint> {
     assert(Number.isSafeInteger(precision) && precision > 0 && precision <= 76, 'Invalid precision')
     assert(Number.isSafeInteger(scale) && scale > 0 && scale <= precision, 'Invalid scale')
     return {
@@ -33,7 +33,7 @@ export function BigNumeric(precision: number, scale = 0): Type<bigint> {
     }
 }
 
-export function Bool(): Type<bigint> {
+export function Bool(): Type<boolean> {
     return {
         bqType: 'BOOL',
         serialize(value) {
@@ -60,7 +60,7 @@ export function Float64(): Type<number> {
     }
 }
 
-export function Int64<T extends number | bigint>(): Type<T> {
+export function Int64(): Type<number | bigint> {
     return {
         bqType: 'INT64',
         serialize(value) {

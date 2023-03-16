@@ -23,6 +23,15 @@ export function NumericType(): Type<bigint> {
     }
 }
 
+export function BigNumericType(): Type<bigint> {
+    return {
+        bqType: 'BIGNUMERIC',
+        serialize(value) {
+            return value.toString()
+        },
+    }
+}
+
 export function BoolType(): Type<bigint> {
     return {
         bqType: 'BOOL',

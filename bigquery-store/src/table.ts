@@ -1,4 +1,7 @@
-import {Type} from './types'
+export interface Type<T> {
+    bqType: string
+    serialize(value: T): any
+}
 
 export interface ColumnOptions {
     nullable?: boolean

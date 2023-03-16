@@ -1,12 +1,8 @@
 import {BigQueryInt, BigQueryTimestamp} from '@google-cloud/bigquery'
 import assert from 'assert'
+import {Type} from './table'
 
-export interface Type<T> {
-    bqType: string
-    serialize(value: T): any
-}
-
-export function StringType(): Type<string> {
+export function String(): Type<string> {
     return {
         bqType: 'STRING',
         serialize(value) {
@@ -15,7 +11,7 @@ export function StringType(): Type<string> {
     }
 }
 
-export function NumericType(precision: number, scale = 0): Type<bigint> {
+export function Numeric(precision: number, scale = 0): Type<bigint> {
     assert(Number.isSafeInteger(precision) && precision > 0 && precision <= 38, 'Invalid precision')
     assert(Number.isSafeInteger(scale) && scale > 0 && scale <= precision, 'Invalid scale')
     return {
@@ -26,7 +22,7 @@ export function NumericType(precision: number, scale = 0): Type<bigint> {
     }
 }
 
-export function BigNumericType(precision: number, scale = 0): Type<bigint> {
+export function BigNumeric(precision: number, scale = 0): Type<bigint> {
     assert(Number.isSafeInteger(precision) && precision > 0 && precision <= 76, 'Invalid precision')
     assert(Number.isSafeInteger(scale) && scale > 0 && scale <= precision, 'Invalid scale')
     return {
@@ -37,7 +33,7 @@ export function BigNumericType(precision: number, scale = 0): Type<bigint> {
     }
 }
 
-export function BoolType(): Type<bigint> {
+export function Bool(): Type<bigint> {
     return {
         bqType: 'BOOL',
         serialize(value) {
@@ -46,7 +42,7 @@ export function BoolType(): Type<bigint> {
     }
 }
 
-export function TimestampType(): Type<Date> {
+export function Timestamp(): Type<Date> {
     return {
         bqType: 'TIMESTAMP',
         serialize(value) {
@@ -73,7 +69,7 @@ export function Int64<T extends number | bigint>(): Type<T> {
     }
 }
 
-export function ArrayType<T>(itemType: Type<T>): Type<T[]> {
+export function Array<T>(itemType: Type<T>): Type<T[]> {
     return {
         bqType: `ARRAY<${itemType.bqType}>`,
         serialize(value) {

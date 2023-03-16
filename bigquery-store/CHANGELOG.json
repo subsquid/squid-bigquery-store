@@ -1,0 +1,25 @@
+{
+  "name": "@subsquid/bigquery-store",
+  "entries": [
+    {
+      "version": "0.1.0",
+      "tag": "@subsquid/bigquery-store_v0.1.0",
+      "date": "Thu, 16 Mar 2023 14:32:39 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "add BigNumeric type"
+          },
+          {
+            "comment": "export type with namespace"
+          }
+        ],
+        "patch": [
+          {
+            "comment": "fix boolean typescript type"
+          }
+        ]
+      }
+    }
+  ]
+}

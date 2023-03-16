@@ -13,7 +13,7 @@ export function String(): Type<string> {
 
 export function Numeric(precision: number, scale = 0): Type<number | bigint> {
     assert(Number.isSafeInteger(precision) && precision > 0 && precision <= 38, 'Invalid precision')
-    assert(Number.isSafeInteger(scale) && scale > 0 && scale <= precision, 'Invalid scale')
+    assert(Number.isSafeInteger(scale) && scale >= 0 && scale <= precision, 'Invalid scale')
     return {
         bqType: `NUMERIC(${precision}, ${scale})`,
         serialize(value) {
@@ -24,7 +24,7 @@ export function Numeric(precision: number, scale = 0): Type<number | bigint> {
 
 export function BigNumeric(precision: number, scale = 0): Type<number | bigint> {
     assert(Number.isSafeInteger(precision) && precision > 0 && precision <= 76, 'Invalid precision')
-    assert(Number.isSafeInteger(scale) && scale > 0 && scale <= precision, 'Invalid scale')
+    assert(Number.isSafeInteger(scale) && scale >= 0 && scale <= precision, 'Invalid scale')
     return {
         bqType: `BIGNUMERIC(${precision}, ${scale})`,
         serialize(value) {

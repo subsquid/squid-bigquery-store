@@ -80,7 +80,7 @@ export class Database<T extends Tables> {
             let table = this.tables[tableAlias]
             await this.bq.query(
                 `CREATE TABLE IF NOT EXISTS ${this.dataset}.${table.name} (${table.columns
-                    .map((c) => `\`${c.name}\` ${c.data.type.bqType}` + (c.data.options.nullable ? '' : ` NOT NULL`))
+                    .map((c) => `\`${c.name}\` ${c.data.type.bqFullType || c.data.type.bqType}` + (c.data.options.nullable ? '' : ` NOT NULL`))
                     .join(`, `)})`
             )
         }

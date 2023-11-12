@@ -79,6 +79,10 @@ export function Int64(): Type<number | bigint> {
     }
 }
 
+/*
+// Arrays are unusable since the INSERT query at
+// database.ts relies on joining arrays and GoogleSQL
+// prohibits arrays of arrays
 export function Array<T>(itemType: Type<T>): Type<T[]> {
     return {
         bqType: `ARRAY<${itemType.bqType}>`,
@@ -87,3 +91,4 @@ export function Array<T>(itemType: Type<T>): Type<T[]> {
         },
     }
 }
+*/

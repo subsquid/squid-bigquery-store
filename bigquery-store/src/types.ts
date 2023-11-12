@@ -12,8 +12,12 @@ export function String(): Type<string> {
 }
 
 export function Numeric(precision: number, scale = 0): Type<number | bigint> {
-    assert(Number.isSafeInteger(precision) && precision > 0 && precision <= 38, 'Invalid precision')
-    assert(Number.isSafeInteger(scale) && scale >= 0 && scale <= precision, 'Invalid scale')
+    /**
+     * Valid scale values are {0, 1, ..., 9}
+     * Valid precision values are {max(1,scale), ..., scale+29}
+     */
+    assert(Number.isSafeInteger(scale) && scale >= 0 && scale <= 9, `Invalid scale ${scale} for NUMERIC`)
+    assert(Number.isSafeInteger(precision) && (scale>1?scale:1) <= precision && precision <= scale+29, `Invalid precision ${precision} for scale ${scale} for NUMERIC`)
     return {
         bqType: `NUMERIC(${precision}, ${scale})`,
         serialize(value) {
@@ -23,8 +27,12 @@ export function Numeric(precision: number, scale = 0): Type<number | bigint> {
 }
 
 export function BigNumeric(precision: number, scale = 0): Type<number | bigint> {
-    assert(Number.isSafeInteger(precision) && precision > 0 && precision <= 76, 'Invalid precision')
-    assert(Number.isSafeInteger(scale) && scale >= 0 && scale <= precision, 'Invalid scale')
+    /**
+     * Valid scale values are {0, 1, ..., 38}
+     * Valid precision values are {max(1,scale), ..., scale+38}
+     */
+    assert(Number.isSafeInteger(scale) && scale >= 0 && scale <= 38, `Invalid scale ${scale} for BIGNUMERIC`)
+    assert(Number.isSafeInteger(precision) && (scale>1?scale:1) <= precision && precision <= scale+38, `Invalid precision ${precision} for scale ${scale} for BIGNUMERIC`)
     return {
         bqType: `BIGNUMERIC(${precision}, ${scale})`,
         serialize(value) {

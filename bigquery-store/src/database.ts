@@ -87,25 +87,18 @@ export class Database<T extends Tables> {
 
         await this.bq.query(`CREATE TABLE IF NOT EXISTS ${this.dataset}.status (height int not null, blockHash string not null)`)
 
-        console.log(`Revisit status extraction`)
-
         let status = await this.bq
             .query(`SELECT height, blockHash FROM ${this.dataset}.status`)
+            .then(rows => rows[0])
 
-        console.log('status', status)
-        process.exit(1)
-
-//            .then(rows => rows.map(r => ({height: r[0], hash: r[1]})))
-/*
-        if (status.length == 0) {
+        if (status.length == 0) { // BQ returned [[]]
             await this.bq.query(`INSERT INTO ${this.dataset}.status (height, blockHash) VALUES (-1, "0x")`)
             this.state = {hash: '0x', height: -1}
-        } else {
-            const [height, hash] = status[0]
-            this.state = {hash, height}
+        } else { // BQ returned [[{height, blockHash}]]
+            this.state = {height: status[0].height, hash: status[0].blockHash}
         }
-*/
-        return this.state ?? {hash: '0x', height: -1}
+
+        return this.state
     }
 
     async transact(info: FinalTxInfo, cb: (store: Store<T>) => Promise<void>): Promise<void> {
@@ -134,13 +127,6 @@ export class Database<T extends Tables> {
 
         open = false
     }
-/*
-    async advance(height: number): Promise<void> {
-        if (this.lastCommitted == height) return
-        let tx = await BigQueryTransaction.create(this.bq)
-        await tx.query(`UPDATE ${this.dataset}.status SET height = @height WHERE height < @height`, {height})
-        await tx.commit()
-    }*/
 }
 
 abstract class BaseStore {

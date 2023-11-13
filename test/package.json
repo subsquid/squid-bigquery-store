@@ -8,7 +8,7 @@
   "scripts": {
     "build": "rm -rf lib && tsc",
     "update": "npx npm-check-updates --filter /subsquid/ --upgrade",
-    "processor:start": "node lib/processor.js"
+    "processor:start": "node lib/main.js"
   },
   "dependencies": {
     "@subsquid/bigquery-store": "^0.1.0",
@@ -22,5 +22,8 @@
     "@subsquid/substrate-typegen": "^8.0.1",
     "@types/node": "20.9.0",
     "typescript": "5.2.2"
+  },
+  "peerDependencies": {
+    "@subsquid/substrate-runtime": "^1.0.1"
   }
 }

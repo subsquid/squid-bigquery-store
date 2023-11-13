@@ -1,5 +1,5 @@
 process:
-	@node -r dotenv/config lib/processor.js
+	@node -r dotenv/config lib/main.js
 
 build:
 	@npm run build

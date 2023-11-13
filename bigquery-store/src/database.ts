@@ -26,7 +26,7 @@ export type Store<T extends Tables> = Readonly<{
     flush(): Promise<void>
 }
 
-interface StoreConstructor<T extends Tables> { // ????
+interface StoreConstructor<T extends Tables> {
     new (tx: () => BigQueryTransaction): Store<T>
 }
 
@@ -80,21 +80,27 @@ export class Database<T extends Tables> {
             let table = this.tables[tableAlias]
             await this.bq.query(
                 `CREATE TABLE IF NOT EXISTS ${this.dataset}.${table.name} (${table.columns
-                    .map((c) => `\`${c.name}\` ${c.data.type.bqFullType || c.data.type.bqType}` + (c.data.options.nullable ? '' : ` NOT NULL`))
+                    .map(
+                        (c) =>
+                            `\`${c.name}\` ${c.data.type.bqFullType || c.data.type.bqType}` +
+                            (c.data.options.nullable ? '' : ` NOT NULL`)
+                    )
                     .join(`, `)})`
             )
         }
 
-        await this.bq.query(`CREATE TABLE IF NOT EXISTS ${this.dataset}.status (height int not null, blockHash string not null)`)
+        await this.bq.query(
+            `CREATE TABLE IF NOT EXISTS ${this.dataset}.status (height int not null, blockHash string not null)`
+        )
 
-        let status = await this.bq
-            .query(`SELECT height, blockHash FROM ${this.dataset}.status`)
-            .then(rows => rows[0])
+        let status = await this.bq.query(`SELECT height, blockHash FROM ${this.dataset}.status`).then((rows) => rows[0])
 
-        if (status.length == 0) { // BQ returned [[]]
+        if (status.length == 0) {
+            // BQ returned [[]]
             await this.bq.query(`INSERT INTO ${this.dataset}.status (height, blockHash) VALUES (-1, "0x")`)
             this.state = {hash: '0x', height: -1}
-        } else { // BQ returned [[{height, blockHash}]]
+        } else {
+            // BQ returned [[{height, blockHash}]]
             this.state = {height: status[0].height, hash: status[0].blockHash}
         }
 
@@ -122,7 +128,11 @@ export class Database<T extends Tables> {
         let from = info.prevHead.height
         let to = info.nextHead.height
         let hash = info.nextHead.hash
-        await tx.query(`UPDATE ${this.dataset}.status SET height = @to, blockHash = @hash WHERE height < @from`, {from, to, hash})
+        await tx.query(`UPDATE ${this.dataset}.status SET height = @to, blockHash = @hash WHERE height < @from`, {
+            from,
+            to,
+            hash,
+        })
         await tx.commit()
 
         open = false

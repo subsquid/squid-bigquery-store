@@ -11,7 +11,7 @@
     "processor:start": "node lib/main.js"
   },
   "dependencies": {
-    "@subsquid/bigquery-store": "^0.1.0",
+    "@subsquid/bigquery-store": "^0.1.1",
     "@subsquid/ss58": "^2.0.1",
     "@subsquid/substrate-processor": "^7.2.1",
     "dotenv": "^16.0.3",

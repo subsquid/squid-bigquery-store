@@ -1,5 +1,12 @@
 export interface Type<T> {
     bqType: string
+    /**
+     * Used when creating tables. Defaults to the value of bqType.
+     * Set when working with parameterized types, e.g. NUMERIC() requires
+     * "NUMERIC(p, s)" at the table creation
+     * "NUMERIC" at the inserts
+     */
+    bqFullType?: string
     serialize(value: T): any
 }
 

@@ -2,6 +2,7 @@ import * as bq from '@google-cloud/bigquery'
 import assert from 'assert'
 import {BigQueryTransaction} from './client'
 import {ITable, Table, TableWriter} from './table'
+import {FinalDatabase, FinalTxInfo, HashAndHeight} from '@subsquid/util-internal-processor-tools'
 
 type Tables = Record<string, Table<any>>
 
@@ -13,15 +14,15 @@ export interface DatabaseOptions<T extends Tables> {
     dataset: string
 }
 
-type Chunk<T extends Tables> = {
+type DataBuffer<T extends Tables> = {
     [k in keyof T]: TableWriter<T[k] extends ITable<infer R> ? R : never>
 }
 
 type ToStoreWriter<W extends TableWriter<any>> = Pick<W, 'insert' | 'insertMany'>
 
-export type Store<T extends Tables> = {
-    readonly [k in keyof T]: ToStoreWriter<Chunk<T>[k]>
-} & {
+export type Store<T extends Tables> = Readonly<{
+    [k in keyof T]: ToStoreWriter<DataBuffer<T>[k]>
+}> & {
     flush(): Promise<void>
 }
 
@@ -30,13 +31,13 @@ interface StoreConstructor<T extends Tables> {
 }
 
 export class Database<T extends Tables> {
-    protected tables: T
-    protected dataset: string
-    protected bq: bq.BigQuery
+    private tables: T
+    private dataset: string
+    private bq: bq.BigQuery
 
-    protected lastCommitted?: number
+    private StoreConstructor: StoreConstructor<T>
 
-    protected StoreConstructor: StoreConstructor<T>
+    private state?: HashAndHeight
 
     constructor(options: DatabaseOptions<T>) {
         this.tables = options.tables
@@ -46,7 +47,7 @@ export class Database<T extends Tables> {
         class Store extends BaseStore {
             protected tables: Tables
             protected dataset: string
-            protected chunk: Chunk<T>
+            protected chunk: DataBuffer<T>
 
             constructor(protected tx: () => BigQueryTransaction) {
                 super(tx)
@@ -55,8 +56,8 @@ export class Database<T extends Tables> {
                 this.chunk = this.createChunk()
             }
 
-            protected createChunk(): Chunk<T> {
-                let chunk: Chunk<any> = {}
+            private createChunk(): DataBuffer<T> {
+                let chunk: DataBuffer<any> = {}
                 for (let name in this.tables) {
                     chunk[name] = this.tables[name].createWriter()
                 }
@@ -74,31 +75,39 @@ export class Database<T extends Tables> {
         this.StoreConstructor = Store as any
     }
 
-    async connect(): Promise<number> {
+    async connect(): Promise<HashAndHeight> {
         for (let tableAlias in this.tables) {
             let table = this.tables[tableAlias]
             await this.bq.query(
                 `CREATE TABLE IF NOT EXISTS ${this.dataset}.${table.name} (${table.columns
-                    .map((c) => `\`${c.name}\` ${c.data.type.bqType}` + (c.data.options.nullable ? '' : ` NOT NULL`))
+                    .map(
+                        (c) =>
+                            `\`${c.name}\` ${c.data.type.bqFullType || c.data.type.bqType}` +
+                            (c.data.options.nullable ? '' : ` NOT NULL`)
+                    )
                     .join(`, `)})`
             )
         }
 
-        await this.bq.query(`CREATE TABLE IF NOT EXISTS ${this.dataset}.status (height int not null)`)
-        let status: {height: number}[] = await this.bq
-            .query(`SELECT height FROM ${this.dataset}.status`)
-            .then((r) => r[0])
+        await this.bq.query(
+            `CREATE TABLE IF NOT EXISTS ${this.dataset}.status (height int not null, blockHash string not null)`
+        )
+
+        let status = await this.bq.query(`SELECT height, blockHash FROM ${this.dataset}.status`).then((rows) => rows[0])
+
         if (status.length == 0) {
-            await this.bq.query(`INSERT INTO ${this.dataset}.status (height) VALUES (-1)`)
-            this.lastCommitted = -1
+            // BQ returned [[]]
+            await this.bq.query(`INSERT INTO ${this.dataset}.status (height, blockHash) VALUES (-1, "0x")`)
+            this.state = {hash: '0x', height: -1}
         } else {
-            this.lastCommitted = status[0].height
+            // BQ returned [[{height, blockHash}]]
+            this.state = {height: status[0].height, hash: status[0].blockHash}
         }
 
-        return this.lastCommitted
+        return this.state
     }
 
-    async transact(from: number, to: number, cb: (store: Store<T>) => Promise<void>): Promise<void> {
+    async transact(info: FinalTxInfo, cb: (store: Store<T>) => Promise<void>): Promise<void> {
         let tx = await BigQueryTransaction.create(this.bq)
         let open = true
 
@@ -116,24 +125,24 @@ export class Database<T extends Tables> {
             throw e
         }
 
-        await tx.query(`UPDATE ${this.dataset}.status SET height = @to WHERE height < @from`, {from, to})
+        let from = info.prevHead.height
+        let to = info.nextHead.height
+        let hash = info.nextHead.hash
+        await tx.query(`UPDATE ${this.dataset}.status SET height = @to, blockHash = @hash WHERE height < @from`, {
+            from,
+            to,
+            hash,
+        })
         await tx.commit()
 
         open = false
-    }
-
-    async advance(height: number): Promise<void> {
-        if (this.lastCommitted == height) return
-        let tx = await BigQueryTransaction.create(this.bq)
-        await tx.query(`UPDATE ${this.dataset}.status SET height = @height WHERE height < @height`, {height})
-        await tx.commit()
     }
 }
 
 abstract class BaseStore {
     protected abstract dataset: string
     protected abstract tables: Tables
-    protected abstract chunk: Chunk<any>
+    protected abstract chunk: DataBuffer<any>
 
     constructor(protected tx: () => BigQueryTransaction) {}
 

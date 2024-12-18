@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@subsquid/bigquery-store",
+      "comment": "(1) added an optional project-wide session termination at startup; (2) now empty table updates won't cause a call to BQ, saving time on latency.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@subsquid/bigquery-store"
+}

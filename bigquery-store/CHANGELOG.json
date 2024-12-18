@@ -2,6 +2,18 @@
   "name": "@subsquid/bigquery-store",
   "entries": [
     {
+      "version": "0.1.2",
+      "tag": "@subsquid/bigquery-store_v0.1.2",
+      "date": "Wed, 18 Dec 2024 22:57:16 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "(1) added an optional project-wide session termination at startup; (2) now empty table updates won't cause a call to BQ, saving time on latency."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.1.1",
       "tag": "@subsquid/bigquery-store_v0.1.1",
       "date": "Mon, 13 Nov 2023 10:54:57 GMT",

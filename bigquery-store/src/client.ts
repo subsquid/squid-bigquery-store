@@ -1,4 +1,7 @@
 import * as bq from '@google-cloud/bigquery'
+import {createLogger} from '@subsquid/logger'
+
+const logger = createLogger('sqd:bigquery-store')
 
 export class BigQueryTransaction {
     private constructor(private bq: bq.BigQuery, readonly sessionId: string) {}
@@ -11,7 +14,7 @@ export class BigQueryTransaction {
     }
 
     query(query: string, params?: Record<string, any>, types?: Record<string, any>) {
-        console.log(query)
+        logger.info(query)
         return this.bq
             .query({
                 query,

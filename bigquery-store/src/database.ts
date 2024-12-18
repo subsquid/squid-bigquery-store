@@ -3,6 +3,7 @@ import assert from 'assert'
 import {BigQueryTransaction} from './client'
 import {ITable, Table, TableWriter} from './table'
 import {FinalDatabase, FinalTxInfo, HashAndHeight} from '@subsquid/util-internal-processor-tools'
+import {createLogger} from '@subsquid/logger'
 
 type Tables = Record<string, Table<any>>
 
@@ -12,6 +13,24 @@ export interface DatabaseOptions<T extends Tables> {
     bq: bq.BigQuery
 
     dataset: string
+
+    /**
+     * WARNING: can lead to data loss. Only enable when you're certain that
+     * your squid is the only app that is using sessions to access your BigQuery
+     * project.
+     *
+     * At the indexer startup, abort all
+     * {@link https://cloud.google.com/bigquery/docs/sessions-intro | sessions}
+     * that are active for your project.
+     *
+     * If you enable this you also have to specify {@link datasetRegion}.
+     */
+    abortAllProjectSessionsOnStartup?: boolean
+    /**
+     * Dataset region string such as "region-us". Only used when
+     * {@link abortAllProjectSessionsOnStartup} is enabled.
+     */
+    datasetRegion?: string
 }
 
 type DataBuffer<T extends Tables> = {
@@ -30,10 +49,48 @@ interface StoreConstructor<T extends Tables> {
     new (tx: () => BigQueryTransaction): Store<T>
 }
 
+const logger = createLogger('sqd:bigquery-store')
+const statusUpdateConcurrencyError =
+`Your squid likely restarted after being terminated at the status update,
+leaving a dangling session. You have two options:
+
+1. If you are not sure if your squid is the only app that uses sessions
+   (https://cloud.google.com/bigquery/docs/sessions-intro) to access your
+   BigQuery project, find the faulty session manually and terminate it. See
+   https://cloud.google.com/bigquery/docs/sessions-get-ids#list_active
+   https://cloud.google.com/bigquery/docs/sessions-terminating#terminate_a_session_by_id
+
+2. DANGEROUS If you are absolutely certain that the squid is the only app
+   that uses sessions to access your BigQuery project, you can terminate
+   all the dangling sessions by running
+
+   FOR session in (
+     SELECT
+       session_id,
+       MAX(creation_time) AS last_modified_time,
+     FROM \`region-us\`.INFORMATION_SCHEMA.SESSIONS_BY_PROJECT
+     WHERE
+       session_id IS NOT NULL
+       AND is_active
+     GROUP BY session_id
+     ORDER BY last_modified_time DESC
+   )
+   DO
+     CALL BQ.ABORT_SESSION(session.session_id);
+   END FOR;
+
+   You can also enable the abortAllProjectSessionsOnStartup and supply
+   datasetRegion in your database config to perform this operation at startup.
+
+All available details will be listed below.
+`
+
 export class Database<T extends Tables> {
     private tables: T
     private dataset: string
     private bq: bq.BigQuery
+    private abortAllProjectSessionsOnStartup: boolean
+    private datasetRegion: string | undefined
 
     private StoreConstructor: StoreConstructor<T>
 
@@ -43,6 +100,14 @@ export class Database<T extends Tables> {
         this.tables = options.tables
         this.dataset = options.dataset || 'squid'
         this.bq = options.bq
+        this.abortAllProjectSessionsOnStartup = options.abortAllProjectSessionsOnStartup ?? false
+        if (this.abortAllProjectSessionsOnStartup) {
+            if (options.datasetRegion == null) {
+                logger.fatal('You must specify dataset region if you enable abortAllProjectSessionsOnStartup')
+                process.exit(1)
+            }
+            this.datasetRegion = options.datasetRegion
+        }
 
         class Store extends BaseStore {
             protected tables: Tables
@@ -78,6 +143,25 @@ export class Database<T extends Tables> {
     async connect(): Promise<HashAndHeight> {
         for (let tableAlias in this.tables) {
             let table = this.tables[tableAlias]
+            if (this.abortAllProjectSessionsOnStartup) {
+                logger.info(`Aborting all project sessions...`)
+                await this.bq.query(
+                    `FOR session in (
+                        SELECT
+                            session_id,
+                            MAX(creation_time) AS last_modified_time,
+                        FROM \`${this.datasetRegion}\`.INFORMATION_SCHEMA.SESSIONS_BY_PROJECT
+                        WHERE
+                            session_id IS NOT NULL
+                            AND is_active
+                        GROUP BY session_id
+                        ORDER BY last_modified_time DESC
+                    )
+                    DO
+                        CALL BQ.ABORT_SESSION(session.session_id);
+                    END FOR;`
+                )
+            }
             await this.bq.query(
                 `CREATE TABLE IF NOT EXISTS ${this.dataset}.${table.name} (${table.columns
                     .map(
@@ -128,11 +212,18 @@ export class Database<T extends Tables> {
         let from = info.prevHead.height
         let to = info.nextHead.height
         let hash = info.nextHead.hash
-        await tx.query(`UPDATE ${this.dataset}.status SET height = @to, blockHash = @hash WHERE height < @from`, {
-            from,
-            to,
-            hash,
-        })
+        try {
+            await tx.query(`UPDATE ${this.dataset}.status SET height = @to, blockHash = @hash WHERE height < @from`, {
+                from,
+                to,
+                hash,
+            })
+        } catch (e: any) {
+            if (e.message.startsWith(`Transaction is aborted due to concurrent update against table`)) {
+                logger.error(statusUpdateConcurrencyError)
+            }
+            throw e
+        }
         await tx.commit()
 
         open = false
@@ -149,6 +240,11 @@ abstract class BaseStore {
     async flush() {
         for (let tableAlias in this.tables) {
             let data = this.chunk[tableAlias].flush()
+            if (Object.entries(data).map(([_, v]) => v.length).every(l => l === 0)) {
+                logger.info(`Skipping the update for table ${tableAlias} - no data`)
+                continue
+            }
+
             let table = this.tables[tableAlias]
 
             let fields = table.columns.map((c) => `\`${c.name}\``)

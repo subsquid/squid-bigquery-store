@@ -121,6 +121,14 @@ packages:
       supports-color: 8.1.1
     dev: false
 
+  /@subsquid/logger/1.3.3:
+    resolution: {integrity: sha512-BdoRVIOrIRzKdMZPoJxzJzPLulf5Q09GeLtJn0whP+rhDV5nQ4ANDAzjPg9jmgH9WkMYAr2XH4lny/4PjhQUNA==}
+    dependencies:
+      '@subsquid/util-internal-hex': 1.2.2
+      '@subsquid/util-internal-json': 1.2.3
+      supports-color: 8.1.1
+    dev: false
+
   /@subsquid/rpc-client/4.4.2:
     resolution: {integrity: sha512-Zo/KuFNiwKblKCUDpXUNbeshxEpCX44CtBKbzr4f5zFNdwxuH7FjwFnZk4X5YZUVnbcTF6cmqhH5RwRkKBgPfQ==}
     dependencies:
@@ -235,7 +243,7 @@ packages:
       '@subsquid/scale-codec': 4.0.0
       '@subsquid/scale-type-system': 1.0.1_@subsquid+scale-codec@4.0.0
       '@subsquid/util-internal': 2.5.2
-      '@subsquid/util-internal-hex': 1.2.1
+      '@subsquid/util-internal-hex': 1.2.2
       '@subsquid/util-naming': 1.2.1
       '@subsquid/util-xxhash': 1.2.1
       blake2b: 2.1.4
@@ -310,6 +318,10 @@ packages:
     resolution: {integrity: sha512-R7TYDsftjguapzWia97WGvcF4s65VKArzSga5i1i4aZSq9Z330kPYpgAUkqDGsJqD/Ki3PTE4cXhuKLRyMHPvg==}
     dev: false
 
+  /@subsquid/util-internal-hex/1.2.2:
+    resolution: {integrity: sha512-E43HVqf23jP5hvtWF9GsiN8luANjnJ1daR2SVTwaIUAYU/uNjv1Bi6tHz2uexlflBhyxAgBDmHgunXZ45wQTIw==}
+    dev: false
+
   /@subsquid/util-internal-http-client/0.1.0:
     resolution: {integrity: sha512-LOSOX1Yv4t/NA/90qrmmCArOYTntxWV4dcnTXadKXQiM9gPnVNGLCa+Z17HYjBrvZFHDdYglV2F9kOikOqDd/Q==}
     dependencies:
@@ -344,10 +356,16 @@ packages:
       '@subsquid/util-internal-hex': 1.2.1
     dev: false
 
+  /@subsquid/util-internal-json/1.2.3:
+    resolution: {integrity: sha512-H5qW5kG20IzVMpb7GhPbVRxGuACEf1DPIXE1+LNXYxt8t/GX4zQREQWHRvCB3lck+RORLJD3WJbQUtxN5UYB3Q==}
+    dependencies:
+      '@subsquid/util-internal-hex': 1.2.2
+    dev: false
+
   /@subsquid/util-internal-processor-tools/0.0.1:
     resolution: {integrity: sha512-xJrtJDJIKe5kp1w1PWdYzLdulo5eIymGTQPmUJ1JE4WXSkx4MPftZTZK0YXeLAP1plF3Ob0hQ3/h/B0n+04A+Q==}
     dependencies:
-      '@subsquid/logger': 1.3.1
+      '@subsquid/logger': 1.3.3
       '@subsquid/util-internal': 2.5.2
       '@subsquid/util-internal-binary-heap': 1.0.0
       '@subsquid/util-internal-counters': 1.3.1
@@ -1517,11 +1535,12 @@ packages:
     dev: false
 
   file:projects/bigquery-store.tgz:
-    resolution: {integrity: sha512-dpy7To5RcuJaNP1FzulJJ9/tLlLh7zeJ4ZPy4OGYA3lnrNM3tIbNB7Ngu4LfJ/oZo3r0iQzlUXN6kKPRQxTHGQ==, tarball: file:projects/bigquery-store.tgz}
+    resolution: {integrity: sha512-DiiRhfJWdF1NgL+IlGRJnKMjmhUHGqEgXyS9xeINLOUZ68XjMVsZ37kNSjSIzx15hfenn3J2xdLhQXMouoATbA==, tarball: file:projects/bigquery-store.tgz}
     name: '@rush-temp/bigquery-store'
     version: 0.0.0
     dependencies:
       '@google-cloud/bigquery': 7.3.0
+      '@subsquid/logger': 1.3.3
       '@subsquid/util-internal': 2.5.2
       '@subsquid/util-internal-processor-tools': 0.0.1
       '@types/mocha': 10.0.4
@@ -1535,7 +1554,7 @@ packages:
     dev: false
 
   file:projects/test.tgz:
-    resolution: {integrity: sha512-XohTsBBNznLL3VD/p27LMRTaMShrxYuTNuPC64DmIw1Njm2hfmQGxL8jFPMxa6uL5wwHr/RMRn+YXxfLZLLGyA==, tarball: file:projects/test.tgz}
+    resolution: {integrity: sha512-J/EpqisWS7dAXBmn4+Kca9y3jralQ1OLZxBumr9mhdFBDUC04kw5UtKjKJvmYeWeP+lc8BVkKSo5eaJay7DyAg==, tarball: file:projects/test.tgz}
     name: '@rush-temp/test'
     version: 0.0.0
     dependencies:

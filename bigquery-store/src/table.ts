@@ -47,7 +47,7 @@ export interface ITable<T extends Record<string, any>> {
 
 export class Table<S extends TableSchema> {
     readonly columns: ReadonlyArray<Column>
-    constructor(readonly name: string, schema: S) {
+    constructor(readonly name: string, schema: S, readonly pageSize?: number) {
         let columns: Column[] = []
         for (let column in schema) {
             columns.push({
@@ -69,6 +69,8 @@ export class TableWriter<T extends Record<string, any>> {
     constructor(private columns: ReadonlyArray<Column>) {}
 
     flush() {
+        if (this.records.length === 0) return null
+
         let res: Record<string, any[]> = {}
 
         for (let column of this.columns) {

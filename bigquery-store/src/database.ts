@@ -240,13 +240,11 @@ abstract class BaseStore {
     async flush() {
         for (let tableAlias in this.tables) {
             let data = this.chunk[tableAlias].flush()
-            if (Object.entries(data).map(([_, v]) => v.length).every(l => l === 0)) {
+            if (data === null) {
                 logger.info(`Skipping the update for table ${tableAlias} - no data`)
                 continue
             }
-
             let table = this.tables[tableAlias]
-
             let fields = table.columns.map((c) => `\`${c.name}\``)
             let params = table.columns.map((c) => `@${c.name}`)
             let types: Record<string, any> = {}
@@ -254,19 +252,43 @@ abstract class BaseStore {
                 types[column.name] = [column.data.type.bqType]
             }
 
-            await this.tx().query(
-                `INSERT INTO ${this.dataset}.${this.tables[tableAlias].name} (${fields.join(
-                    ', '
-                )}) SELECT ${fields.join(', ')} FROM ${params
-                    .map((p, i) =>
-                        i == 0
-                            ? `UNNEST(${p}) as ${fields[i]} WITH OFFSET`
-                            : `JOIN UNNEST(${p}) as ${fields[i]} WITH OFFSET USING (OFFSET)`
-                    )
-                    .join(' ')}`,
-                data,
-                types
-            )
+            for (let dataPage of paginateData(data, table.pageSize)) {
+                await this.tx().query(
+                    `INSERT INTO ${this.dataset}.${this.tables[tableAlias].name} (${fields.join(
+                        ', '
+                    )}) SELECT ${fields.join(', ')} FROM ${params
+                        .map((p, i) =>
+                            i == 0
+                                ? `UNNEST(${p}) as ${fields[i]} WITH OFFSET`
+                                : `JOIN UNNEST(${p}) as ${fields[i]} WITH OFFSET USING (OFFSET)`
+                        )
+                        .join(' ')}`,
+                    dataPage,
+                    types
+                )
+            }
         }
     }
+}
+
+function paginateData(data: Record<string, any[]>, pageSize: number | undefined): Record<string, any[]>[] {
+    if (pageSize === undefined) {
+        return [data]
+    }
+
+    const lengths = Object.entries(data).map(([_, v]) => v.length)
+    assert(lengths.every(l => l === lengths[0]), 'Columns of variable height cannot be paginated. This is likely a @subsquid/bigquery-store bug, please report it to the SquidDevs Telegram chat.')
+    const length = lengths[0]
+
+    let pos = 0
+    const out: Record<string, any[]>[] = []
+    while (pos < length) {
+        let dataPage: Record<string,any[]> = {}
+        for (let col in data) {
+            dataPage[col] = data[col].slice(pos, pos+pageSize)
+        }
+        out.push(dataPage)
+        pos += pageSize
+    }
+    return out
 }

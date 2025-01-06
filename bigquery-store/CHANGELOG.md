@@ -1,6 +1,13 @@
 # Change Log - @subsquid/bigquery-store
 
-This log was last generated on Wed, 18 Dec 2024 22:57:16 GMT and should not be manually modified.
+This log was last generated on Mon, 06 Jan 2025 14:54:23 GMT and should not be manually modified.
+
+## 0.1.3
+Mon, 06 Jan 2025 14:54:23 GMT
+
+### Patches
+
+- Simpler handling for empty table data + pagination of BQ inserts
 
 ## 0.1.2
 Wed, 18 Dec 2024 22:57:16 GMT

@@ -2,6 +2,18 @@
   "name": "@subsquid/bigquery-store",
   "entries": [
     {
+      "version": "0.1.3",
+      "tag": "@subsquid/bigquery-store_v0.1.3",
+      "date": "Mon, 06 Jan 2025 14:54:23 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Simpler handling for empty table data + pagination of BQ inserts"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.1.2",
       "tag": "@subsquid/bigquery-store_v0.1.2",
       "date": "Wed, 18 Dec 2024 22:57:16 GMT",

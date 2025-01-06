@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@subsquid/bigquery-store",
+      "comment": "Simpler handling for empty table data + pagination of BQ inserts",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@subsquid/bigquery-store"
+}
